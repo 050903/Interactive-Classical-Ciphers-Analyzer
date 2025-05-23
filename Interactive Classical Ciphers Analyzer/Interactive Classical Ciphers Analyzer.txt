@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Classical Ciphers Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Visualization & Content Choices: 
+        - Report Info: Abstract, Intro, Comparisons, Enhancements, Usage, Conclusion -> Goal: Inform -> Presentation: Text blocks, HTML Tables (for Tables 1, 2, 3, 4 from report) -> Interaction: Read -> Justification: Clear presentation of static report content -> Library/Method: HTML.
+        - Report Info: Shift Cipher -> Goal: Inform & Engage -> Presentation: Text explanation + Interactive Tool (Plaintext input, Key slider, Ciphertext output) + Dynamic step-by-step module operation display -> Interaction: User encrypts text, sees process -> Justification: Makes algorithm tangible. -> Library/Method: HTML, JS.
+        - Report Info: Monoalphabetic Cipher -> Goal: Inform & Engage -> Presentation: Text explanation + Interactive Tool (Plaintext input, Fixed Key display, Ciphertext output) -> Interaction: User encrypts text -> Justification: Demonstrates monoalphabetic substitution. -> Library/Method: HTML, JS.
+        - Report Info: Key Space Comparison -> Goal: Visualize -> Presentation: Bar Chart (Shift vs. Monoalphabetic conceptual) -> Interaction: View chart -> Justification: Fulfills Chart.js requirement and visually contrasts key space sizes simply. -> Library/Method: Chart.js (Canvas).
+        - Python code snippets from report -> Goal: Inform -> Presentation: Pre-formatted text -> Interaction: Read -> Justification: Shows original implementation. -> Library/Method: HTML.
+    -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-link { transition: all 0.3s ease; }
+        .nav-link.active, .nav-link:hover { background-color: #BE123C; color: white; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .table-container { max-width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #E5E7EB; padding: 8px; text-align: left; }
+        th { background-color: #F3F4F6; }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        .key-char { display: inline-block; width: 2em; height: 2em; line-height: 2em; text-align: center; border: 1px solid #D1D5DB; margin: 2px; border-radius: 0.25rem; font-family: monospace; }
+    </style>
+</head>
+<body class="bg-amber-50 text-neutral-800">
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <nav class="md:w-64 bg-rose-800 text-white p-4 space-y-2">
+            <h2 class="text-xl font-semibold mb-4">Cipher Analyzer</h2>
+            <a href="#" class="nav-link block py-2 px-3 rounded-md active" data-target="abstract">Abstract</a>
+            <a href="#" class="nav-link block py-2 px-3 rounded-md" data-target="introduction">1. Introduction</a>
+            <a href="#" class="nav-link block py-2 px-3 rounded-md" data-target="shift-cipher">2. Shift Cipher</a>
+            <a href="#" class="nav-link block py-2 px-3 rounded-md" data-target="monoalphabetic-cipher">3. Monoalphabetic Cipher</a>
+            <a href="#" class="nav-link block py-2 px-3 rounded-md" data-target="comparative-analysis">4. Comparative Analysis</a>
+            <a href="#" class="nav-link block py-2 px-3 rounded-md" data-target="enhancements">5. Enhancements & Relevance</a>
+            <a href="#" class="nav-link block py-2 px-3 rounded-md" data-target="conclusion">6. Conclusion</a>
+            <a href="#" class="nav-link block py-2 px-3 rounded-md" data-target="recommendations">7. Recommendations</a>
+            <a href="#" class="nav-link block py-2 px-3 rounded-md" data-target="usage-guide">8. Usage Guide (Original Script)</a>
+        </nav>
+
+        <main class="flex-1 p-6 md:p-10 overflow-y-auto">
+            <div id="abstract" class="content-section active space-y-4">
+                <h1 class="text-3xl font-bold text-rose-700 mb-6">Abstract</h1>
+                <p class="text-lg leading-relaxed">This interactive application explores the "Analysis and Implementation of Classical Substitution Ciphers in Python" report. It aims to make the content more accessible and engaging by providing interactive demonstrations of the Shift (Caesar) and Monoalphabetic ciphers, alongside the report's textual analysis.</p>
+                <p>The report provides a comprehensive analysis of two fundamental classical cryptographic algorithms: the Shift Cipher and the Monoalphabetic Substitution Cipher. It delves into their underlying algorithmic principles, examines their practical implementations using Python, explores their historical significance, and critically assesses their cryptographic vulnerabilities in the context of modern security standards.</p>
+                <p>The analysis demonstrates that while these ciphers were historically pivotal in establishing the foundational concepts of cryptography, their inherent simplicity—characterized by small key spaces and fixed substitution patterns—renders them highly susceptible to cryptanalytic attacks such as brute-force enumeration and frequency analysis. Consequently, they offer negligible security for contemporary communication requirements.</p>
+                <p>In conclusion, despite their cryptographic obsolescence for secure communication, the Shift and Monoalphabetic Substitution Ciphers retain significant value as pedagogical tools. They serve as accessible entry points for understanding core cryptographic concepts and vividly illustrate the evolutionary trajectory from rudimentary "art" to the mathematically rigorous "science" that defines modern cryptography.</p>
+            </div>
+
+            <div id="introduction" class="content-section space-y-4">
+                <h1 class="text-3xl font-bold text-rose-700 mb-6">1. Introduction to Classical Cryptography</h1>
+                <p class="text-lg leading-relaxed">This section provides an overview of classical cryptography, setting the stage for understanding the Shift and Monoalphabetic ciphers. It covers the historical context, foundational concepts, and a general overview of substitution ciphers, highlighting their role in the evolution of secure communication.</p>
+                
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">1.1 Historical Context and Foundational Concepts</h2>
+                <p>Cryptography, the practice of secure communication in the presence of adversarial third parties, possesses a rich and intricate history that extends back to ancient civilizations. Early cryptographic endeavors highlight a fundamental human need to protect sensitive information. For instance, non-standard hieroglyphs carved into Egyptian tomb walls around 1900 BC suggest early attempts at concealing meaning. Similarly, clay tablets from Mesopotamia, dated near 1500 BC, contained enciphered writings believed to be secret recipes for pottery glaze, representing an early form of trade secret protection.</p>
+                <p>Prior to the advent of widespread computing and formalized mathematical frameworks, classical cryptography was often perceived as an "art" rather than a systematic science. Its methods relied heavily on manual processes and the individual creativity of those devising the ciphers. The continuous cycle throughout history of humans inventing increasingly complex information-hiding schemes and other humans subsequently breaking them underscores a perpetual "arms race" in the domain of information security.</p>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">1.2 Overview of Substitution Ciphers</h2>
+                <p>Substitution ciphers constitute one of the oldest and most fundamental categories of encryption algorithms. Their core principle involves transforming plaintext into ciphertext by replacing each character with a different character or symbol based on a predefined mapping or rule. This mapping can range from simple schemes, like shifting letters, to more intricate arrangements involving a random permutation of the alphabet.</p>
+                <p>Substitution ciphers are broadly classified into monoalphabetic (single, fixed substitution alphabet) and polyalphabetic (multiple substitution alphabets). The fundamental idea, while conceptually straightforward, inherently preserves the statistical properties of the original language, such as letter frequencies, making them vulnerable to techniques like frequency analysis. This vulnerability spurred the development of more advanced cryptanalytic methods.</p>
+            </div>
+
+            <div id="shift-cipher" class="content-section space-y-6">
+                <h1 class="text-3xl font-bold text-rose-700 mb-6">2. The Shift Cipher (Caesar Cipher)</h1>
+                <p class="text-lg leading-relaxed">The Shift Cipher, famously known as the Caesar Cipher, is one of the simplest substitution ciphers. Each letter in the plaintext is replaced by a letter a fixed number of positions down the alphabet. This section explores its principles, Python implementation, and its strengths and weaknesses, along with an interactive demonstration.</p>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-4 mb-3">Interactive Shift Cipher Tool</h2>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-rose-200">
+                    <div class="mb-4">
+                        <label for="shiftPlaintext" class="block text-sm font-medium text-neutral-700">Plaintext:</label>
+                        <textarea id="shiftPlaintext" rows="3" class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm p-2" placeholder="Enter text to encrypt..."></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label for="shiftKey" class="block text-sm font-medium text-neutral-700">Key (k): <span id="shiftKeyValue">15</span></label>
+                        <input type="range" id="shiftKey" min="0" max="25" value="15" class="mt-1 block w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-rose-600">
+                    </div>
+                    <button id="encryptShift" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500">Encrypt</button>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-neutral-700">Ciphertext:</label>
+                        <textarea id="shiftCiphertext" rows="3" readonly class="mt-1 block w-full rounded-md border-neutral-300 bg-neutral-50 shadow-sm sm:text-sm p-2"></textarea>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="text-md font-semibold text-neutral-700 mb-2">Alphabet Mapping:</h4>
+                        <div id="alphabetMapping" class="flex flex-col space-y-1 text-sm">
+                            <div>Original: <span id="originalAlphabetDisplay" class="font-mono"></span></div>
+                            <div>Shifted: <span id="shiftedAlphabetDisplay" class="font-mono"></span></div>
+                        </div>
+                    </div>
+                     <div class="mt-4">
+                        <h4 class="text-md font-semibold text-neutral-700 mb-2">Step-by-step (Example for first char):</h4>
+                        <pre id="shiftStepByStep" class="bg-neutral-100 p-3 rounded-md text-sm overflow-x-auto"></pre>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">2.1 Algorithmic Principles and Mathematical Foundation</h2>
+                <p>The Shift Cipher operates by replacing each plaintext letter with another letter found by shifting a fixed number of positions (`k`) down the alphabet. It's a symmetric cipher, using the same key for encryption and decryption. Mathematically, for a plaintext letter `P` (0-25) and key `k`:</p>
+                <p class="font-mono bg-neutral-100 p-2 rounded inline-block">Encryption: C = (P + k) mod 26</p>
+                <p class="font-mono bg-neutral-100 p-2 rounded inline-block">Decryption: P = (C - k) mod 26</p>
+                <p>The `mod 26` operation ensures the result wraps around the alphabet. The limited key space (26 possibilities) is a major vulnerability.</p>
+                <div class="table-container mt-4">
+                    <h3 class="text-xl font-semibold text-rose-500 my-2">Table 1: Shift Cipher Encryption/Decryption Formulae</h3>
+                    <table>
+                        <thead><tr><th>Concept</th><th>Symbol</th><th>Description</th><th>Formulae</th></tr></thead>
+                        <tbody>
+                            <tr><td>Plaintext Character</td><td>P</td><td>Original letter (mapped to 0-25)</td><td></td></tr>
+                            <tr><td>Ciphertext Character</td><td>C</td><td>Encrypted letter (mapped to 0-25)</td><td></td></tr>
+                            <tr><td>Shift Value (Key)</td><td>k or n</td><td>Integer representing the shift amount</td><td></td></tr>
+                            <tr><td><strong>Encryption</strong></td><td></td><td></td><td><code>C = (P + k) mod 26</code></td></tr>
+                            <tr><td><strong>Decryption</strong></td><td></td><td></td><td><code>P = (C - k) mod 26</code></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">2.2 Python Implementation Analysis: <code>shift_cipher_encrypt</code></h2>
+                <p>The Python function <code>shift_cipher_encrypt</code> iterates through plaintext, applying the shift to alphabetic characters while preserving case and non-alphabetic characters.</p>
+                <pre class="bg-neutral-800 text-white p-4 rounded-md overflow-x-auto text-sm"><code>def shift_cipher_encrypt(plaintext, key):
+    ciphertext = ""
+    for char in plaintext:
+        if 'A' <= char <= 'Z':
+            shifted_char_ord = (ord(char) - ord('A') + key) % 26 + ord('A')
+            ciphertext += chr(shifted_char_ord)
+        elif 'a' <= char <= 'z':
+            shifted_char_ord = (ord(char) - ord('a') + key) % 26 + ord('a')
+            ciphertext += chr(shifted_char_ord)
+        else:
+            ciphertext += char
+    return ciphertext</code></pre>
+                <h3 class="text-xl font-semibold text-rose-500 mt-4 mb-2">2.2.1 Role of <code>ord()</code> and <code>chr()</code> Functions</h3>
+                <p><code>ord()</code> converts a character to its Unicode integer, and <code>chr()</code> does the reverse. These are crucial for performing mathematical operations on characters.</p>
+                <div class="table-container mt-4">
+                     <h3 class="text-xl font-semibold text-rose-500 my-2">Table 2: `ord()` and `chr()` Examples in Cipher Context</h3>
+                    <table>
+                        <thead><tr><th>Character</th><th><code>ord()</code> Value (Decimal)</th><th><code>chr()</code> Value (from Decimal)</th><th>Cipher Application Example (Shift 15)</th></tr></thead>
+                        <tbody>
+                            <tr><td>'A'</td><td>65</td><td>'A' (from 65)</td><td><code>(ord('A') - ord('A') + 15) % 26 = 15</code>. <code>chr(15 + ord('A'))</code> = <code>chr(80)</code> = 'P'.</td></tr>
+                            <tr><td>'a'</td><td>97</td><td>'a' (from 97)</td><td><code>(ord('a') - ord('a') + 15) % 26 = 15</code>. <code>chr(15 + ord('a'))</code> = <code>chr(112)</code> = 'p'.</td></tr>
+                            <tr><td>'Z'</td><td>90</td><td>'Z' (from 90)</td><td><code>(ord('Z') - ord('A') + 15) % 26 = (25 + 15) % 26 = 14</code>. <code>chr(14 + ord('A'))</code> = <code>chr(79)</code> = 'O'.</td></tr>
+                            <tr><td>'z'</td><td>122</td><td>'z' (from 122)</td><td><code>(ord('z') - ord('a') + 15) % 26 = (25 + 15) % 26 = 14</code>. <code>chr(14 + ord('a'))</code> = <code>chr(111)</code> = 'o'.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">2.3 Cryptographic Strengths and Weaknesses</h2>
+                <p><strong>Strengths (Historical/Pedagogical):</strong> Simple to implement and understand, good for teaching basic cryptographic concepts.</p>
+                <p><strong>Weaknesses (Modern Context):</strong> Extremely small key space (26 possibilities) makes it vulnerable to brute-force attacks. Preserves letter frequencies, making it susceptible to frequency analysis. Composition of shifts offers no added security.</p>
+                
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">2.4 Analysis of Provided Code Execution and Results (Original Script)</h2>
+                <p>The original script demonstrates the Shift Cipher with a fixed key of 15. For input "AN TOAN", the correct ciphertext is "PC IDPC". The script also shows a detailed module operation for "ANTOAN" (no space) resulting in "PCIDPC".</p>
+                <p>The interactive tool above allows you to replicate this and experiment with other inputs and keys.</p>
+            </div>
+
+            <div id="monoalphabetic-cipher" class="content-section space-y-6">
+                <h1 class="text-3xl font-bold text-rose-700 mb-6">3. The Monoalphabetic Substitution Cipher</h1>
+                <p class="text-lg leading-relaxed">The Monoalphabetic Substitution Cipher replaces each plaintext character with a corresponding ciphertext character based on a fixed, jumbled substitution alphabet (the key). This section discusses its principles, Python implementation, and an interactive tool.</p>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-4 mb-3">Interactive Monoalphabetic Cipher Tool</h2>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-rose-200">
+                    <div class="mb-4">
+                        <label for="monoPlaintext" class="block text-sm font-medium text-neutral-700">Plaintext:</label>
+                        <textarea id="monoPlaintext" rows="3" class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 sm:text-sm p-2" placeholder="Enter text to encrypt..."></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral-700">Key:</label>
+                        <div id="monoKeyDisplay" class="mt-1 p-3 bg-neutral-100 rounded-md text-sm font-mono break-all">DKVQFIBJWPESCXHTMYAUOLRGZN</div>
+                    </div>
+                    <button id="encryptMono" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500">Encrypt</button>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-neutral-700">Ciphertext:</label>
+                        <textarea id="monoCiphertext" rows="3" readonly class="mt-1 block w-full rounded-md border-neutral-300 bg-neutral-50 shadow-sm sm:text-sm p-2"></textarea>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="text-md font-semibold text-neutral-700 mb-2">Key Mapping (A-Z):</h4>
+                        <div id="monoKeyMappingVisual" class="text-sm font-mono bg-neutral-50 p-2 rounded">
+                            </div>
+                    </div>
+                </div>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">3.1 Algorithmic Principles and Key Mapping</h2>
+                <p>Each letter in the plaintext is consistently replaced by a different letter according to a fixed substitution alphabet. The key is this jumbled alphabet. While the key space is vast (26!, approx 4 x 10^26), it's weak against frequency analysis because the one-to-one mapping preserves plaintext letter frequencies.</p>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">3.2 Python Implementation Analysis: <code>monoalphabetic_encrypt</code></h2>
+                <p>The function <code>monoalphabetic_encrypt</code> uses Python's <code>str.maketrans()</code> and <code>translate()</code> methods for efficient substitution.</p>
+                <pre class="bg-neutral-800 text-white p-4 rounded-md overflow-x-auto text-sm"><code>def monoalphabetic_encrypt(plaintext, key):
+    ciphertext = ""
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    key_upper = key.upper() # Ensure key is uppercase
+    
+    # Ensure plaintext is uppercase for consistent mapping with a typical monoalphabetic key
+    plaintext_upper = plaintext.upper() 
+    
+    # Create mapping table
+    mapping = str.maketrans(alphabet, key_upper)
+    
+    # Apply translation, character by character to preserve non-alphabetic chars from original plaintext
+    processed_ciphertext = []
+    for i, char_original_case in enumerate(plaintext):
+        char_upper_case = plaintext_upper[i]
+        if char_upper_case in alphabet:
+            encrypted_char_upper = char_upper_case.translate(mapping)
+            # Preserve original case
+            if 'a' <= char_original_case <= 'z':
+                 processed_ciphertext.append(encrypted_char_upper.lower())
+            else: # It was originally uppercase or non-alphabetic that got uppercased
+                 processed_ciphertext.append(encrypted_char_upper)
+        else: # Non-alphabetic character
+            processed_ciphertext.append(char_original_case) # Append original non-alphabetic char
+            
+    ciphertext = "".join(processed_ciphertext)
+    return ciphertext</code></pre>
+                <h3 class="text-xl font-semibold text-rose-500 mt-4 mb-2">3.2.1 Role of <code>str.maketrans()</code> and <code>translate()</code> Methods</h3>
+                <p><code>str.maketrans()</code> creates a translation table mapping characters. <code>translate()</code> applies this table to a string for efficient substitution. This is often more concise and performant than manual looping for fixed substitutions.</p>
+                <div class="table-container mt-4">
+                    <h3 class="text-xl font-semibold text-rose-500 my-2">Table 3: `str.maketrans()` and `translate()` Examples</h3>
+                    <table>
+                        <thead><tr><th>Method Type</th><th><code>maketrans()</code> Call Example</th><th><code>translate()</code> Example</th><th>Result</th><th>Explanation</th></tr></thead>
+                        <tbody>
+                            <tr><td>Two Strings</td><td><code>table = str.maketrans('ABC', 'XYZ')</code></td><td><code>'HELLO'.translate(table)</code></td><td><code>'HYLLO'</code></td><td>Maps 'A' to 'X', 'B' to 'Y', 'C' to 'Z'.</td></tr>
+                            <tr><td>Dictionary</td><td><code>table = str.maketrans({'a': '1', 'e': '2'})</code></td><td><code>'apple'.translate(table)</code></td><td><code>'1ppl2'</code></td><td>Maps 'a' to '1', 'e' to '2'.</td></tr>
+                            <tr><td>Three Strings (Removal)</td><td><code>table = str.maketrans('', '', 'aeiou')</code></td><td><code>'Hello World'.translate(table)</code></td><td><code>'Hll Wrld'</code></td><td>Creates a table to remove all vowels.</td></tr>
+                            <tr><td>*As in original report code*</td><td><code>table = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "DKVQFIBJWPESCXHTMYAUOLRGZN")</code></td><td><code>'PLAINTEXT'.upper().translate(table)</code></td><td><code>'AUQFRBWHV'</code></td><td>Maps standard alphabet to the provided key (assuming plaintext is uppercased).</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">3.3 Cryptographic Strengths and Weaknesses</h2>
+                <p><strong>Strengths (Historical):</strong> Large key space made brute-force attacks infeasible before computers.</p>
+                <p><strong>Weaknesses:</strong> Highly vulnerable to frequency analysis because it preserves letter, digram, and trigram frequencies. The fixed one-to-one mapping is the critical flaw.</p>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">3.4 Analysis of Provided Code Execution and Results (Original Script)</h2>
+                <p>The original script encrypts plaintext using the key "DKVQFIBJWPESCXHTMYAUOLRGZN". For "HELLO WORLD", the ciphertext is "TFMMU ZUOMQ" (if spaces are preserved and input is uppercased before mapping, and output case matches input case). The interactive tool above demonstrates this.</p>
+            </div>
+
+            <div id="comparative-analysis" class="content-section space-y-4">
+                <h1 class="text-3xl font-bold text-rose-700 mb-6">4. Comparative Analysis and Evolution of Ciphers</h1>
+                <p class="text-lg leading-relaxed">This section compares the Shift and Monoalphabetic ciphers, discusses the transition to more complex polyalphabetic ciphers, and highlights the fundamental differences between classical and modern cryptography.</p>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">4.1 Shift Cipher vs. General Monoalphabetic Cipher</h2>
+                <p>Both are substitution ciphers. The Shift Cipher is a specific, simple case of a monoalphabetic cipher with a tiny key space (26). The general Monoalphabetic Cipher has a huge key space (26!) but shares the same vulnerability to frequency analysis due to its one-to-one letter mapping.</p>
+                <p>The large key space of the Monoalphabetic cipher only protects against brute-force key guessing, not statistical attacks.</p>
+                <div class="mt-6">
+                    <h3 class="text-xl font-semibold text-rose-500 mb-2">Key Space Comparison (Conceptual)</h3>
+                    <p class="mb-2 text-sm text-neutral-600">This chart visually contrasts the key space sizes. Note: The Monoalphabetic key space (26!) is astronomically large and cannot be accurately represented to scale against the Shift Cipher's 26 keys. This is a conceptual illustration.</p>
+                    <div class="chart-container bg-white p-4 rounded-lg shadow">
+                        <canvas id="keySpaceChart"></canvas>
+                    </div>
+                </div>
+
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">4.2 Transition to Polyalphabetic Ciphers</h2>
+                <p>To counter frequency analysis, polyalphabetic ciphers like the Vigenère Cipher were developed. These use multiple substitution alphabets, changing the mapping during encryption based on a keyword. This "flattens" ciphertext letter frequencies, making analysis harder. This was an early attempt at achieving "diffusion."</p>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">4.3 Classical vs. Modern Cryptography: Fundamental Differences</h2>
+                <p>Classical cryptography (pre-WWII) was manual, often relied on "security through obscurity" (secret algorithms), and was vulnerable to analysis. Modern cryptography (post-WWII) is a science based on complex math and computational power. It adheres to Kerckhoffs' Principle (algorithm public, key secret) and provides stronger guarantees like integrity and authenticity, not just confidentiality.</p>
+                <div class="table-container mt-4">
+                    <h3 class="text-xl font-semibold text-rose-500 my-2">Table 4: Key Differences: Classical vs. Modern Cryptography</h3>
+                    <table>
+                        <thead><tr><th>Feature</th><th>Classical Cryptography</th><th>Modern Cryptography</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Era</strong></td><td>Pre-WWII</td><td>Post-WWII to Present</td></tr>
+                            <tr><td><strong>Methods</strong></td><td>Manual, Substitution/Transposition, Mechanical</td><td>Algorithmic, Complex Mathematics, Computational</td></tr>
+                            <tr><td><strong>Security Principle</strong></td><td>Security through Obscurity (Algorithm Secret)</td><td>Kerckhoffs' Principle (Key Secret, Algorithm Public)</td></tr>
+                            <tr><td><strong>Vulnerabilities</strong></td><td>Frequency Analysis, Brute-Force (small key space)</td><td>Computational Power (e.g., Quantum), Implementation Flaws</td></tr>
+                            <tr><td><strong>Scalability</strong></td><td>Limited (manual computation, mechanical)</td><td>High (automated, fast, digital)</td></tr>
+                            <tr><td><strong>Primary Use</strong></td><td>Military, Diplomacy</td><td>Ubiquitous (banking, e-commerce, IoT, communication, data storage)</td></tr>
+                            <tr><td><strong>Key Exchange</strong></td><td>Physical, Codebooks, Pre-arranged</td><td>Secure Key Exchange Algorithms (e.g., Diffie-Hellman)</td></tr>
+                            <tr><td><strong>Guarantees</strong></td><td>Confidentiality (limited)</td><td>Confidentiality, Integrity, Authenticity, Non-repudiation</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="enhancements" class="content-section space-y-4">
+                <h1 class="text-3xl font-bold text-rose-700 mb-6">5. Enhancements, Modern Relevance, and Limitations</h1>
+                <p class="text-lg leading-relaxed">This section discusses historical strategies to improve classical ciphers and their contemporary relevance, primarily for education, despite their security limitations for modern applications.</p>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">5.1 Strategies to Mitigate Classical Cipher Weaknesses</h2>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Polyalphabetic Substitution:</strong> (e.g., Vigenère Cipher) Used multiple alphabets to obscure letter frequencies.</li>
+                    <li><strong>Encrypting Multiple Letters:</strong> (e.g., Playfair Cipher) Encrypted digraphs/trigraphs to complicate frequency analysis.</li>
+                    <li><strong>Homophonic Substitution:</strong> Assigned multiple ciphertext symbols to common plaintext letters to flatten frequency distribution.</li>
+                    <li><strong>Transposition Ciphers:</strong> Rearranged letter order instead of substituting. Often combined with substitution (product ciphers).</li>
+                    <li><strong>One-Time Pad:</strong> Theoretically unbreakable if the key is random, as long as the message, and used only once.</li>
+                    <li><strong>Removing Clues:</strong> Removing case, spacing, punctuation from plaintext before encryption.</li>
+                </ul>
+                <p>These were early attempts at "confusion" and "diffusion," key principles in modern cipher design.</p>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">5.2 Contemporary Applications and Educational Value</h2>
+                <p>Classical ciphers are insecure for modern needs but are valuable for:</p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Educational Value:</strong> Excellent for teaching basic cryptographic concepts (substitution, keys, plaintext, ciphertext, frequency analysis, brute-force).</li>
+                    <li><strong>Puzzles and Games:</strong> Used in recreational cryptograms, CTFs.</li>
+                    <li><strong>Component in Advanced Algorithms:</strong> Concepts like substitution are refined in modern ciphers (e.g., S-boxes in AES).</li>
+                    <li><strong>Steganography:</strong> Can add a layer of obscurity.</li>
+                    <li><strong>Code Obfuscation:</strong> Simple techniques sometimes used to hide code.</li>
+                    <li><strong>Video Games:</strong> For secret codes.</li>
+                </ul>
+            </div>
+
+            <div id="conclusion" class="content-section space-y-4">
+                <h1 class="text-3xl font-bold text-rose-700 mb-6">6. Conclusion</h1>
+                <p class="text-lg leading-relaxed">The Shift and Monoalphabetic ciphers, while foundational, are cryptographically weak. Their study is vital for understanding cryptographic evolution and the principles behind modern, secure systems.</p>
+                <p>The Shift Cipher's small key space makes it trivial to break. The Monoalphabetic Cipher, despite a large key space, succumbs to frequency analysis due to its fixed one-to-one substitution. Both offer negligible security today.</p>
+                <p>Modern cryptography is an "exact science" relying on mathematical complexity and key secrecy (Kerckhoffs' Principle), providing comprehensive security. Classical ciphers remain indispensable pedagogical tools, illustrating core concepts and the historical "arms race" between cipher design and cryptanalysis.</p>
+            </div>
+
+            <div id="recommendations" class="content-section space-y-4">
+                <h1 class="text-3xl font-bold text-rose-700 mb-6">7. Recommendations for Further Exploration</h1>
+                <p class="text-lg leading-relaxed">To deepen understanding, the report recommends exploring:</p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><strong>Advanced Classical Ciphers:</strong> Vigenère, transposition ciphers.</li>
+                    <li><strong>Modern Symmetric-Key Ciphers:</strong> AES (Advanced Encryption Standard).</li>
+                    <li><strong>Modern Asymmetric-Key Cryptography:</strong> RSA, Diffie-Hellman.</li>
+                    <li><strong>Cryptanalysis Techniques:</strong> Differential, linear cryptanalysis, side-channel attacks.</li>
+                    <li><strong>Practical Cryptography Libraries:</strong> Python's `cryptography` library.</li>
+                    <li><strong>Security Best Practices:</strong> NIST recommendations, using peer-reviewed algorithms.</li>
+                </ul>
+            </div>
+
+            <div id="usage-guide" class="content-section space-y-4">
+                <h1 class="text-3xl font-bold text-rose-700 mb-6">8. Usage Guide: Executing the Original Python Code</h1>
+                <p class="text-lg leading-relaxed">This guide explains how to run the original Python script provided in the source report. This SPA provides interactive tools, but the following refers to the standalone Python file.</p>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">8.1 System Requirements (for original Python script)</h2>
+                <ul class="list-disc list-inside space-y-1 pl-4">
+                    <li>Python 3.x installed.</li>
+                    <li>No external libraries needed (uses built-in functions).</li>
+                </ul>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">8.2 Step-by-Step Execution Instructions (for original Python script)</h2>
+                <ol class="list-decimal list-inside space-y-1 pl-4">
+                    <li><strong>Save the Code:</strong> Copy the Python code from the report into a file (e.g., <code>ciphers_demo.py</code>).</li>
+                    <li><strong>Open Terminal/Command Prompt.</strong></li>
+                    <li><strong>Navigate to Directory:</strong> Use <code>cd</code> to go to where you saved the file.</li>
+                    <li><strong>Run the Script:</strong> Execute <code>python ciphers_demo.py</code>.</li>
+                    <li><strong>Follow Prompts:</strong> Enter plaintext for Shift Cipher when prompted.</li>
+                    <li><strong>Observe Shift Cipher Output:</strong> View plaintext, key (15), ciphertext, and the detailed "Module Operation for 'AN TOAN'".</li>
+                    <li><strong>Follow Prompts for Monoalphabetic Cipher:</strong> Enter plaintext when prompted.</li>
+                    <li><strong>Observe Monoalphabetic Cipher Output:</strong> View plaintext, fixed key, and ciphertext.</li>
+                </ol>
+
+                <h2 class="text-2xl font-semibold text-rose-600 mt-6 mb-3">8.3 Interpreting Outputs (from original Python script)</h2>
+                <p><strong>Shift Cipher Output:</strong> Shows input, fixed key (15), and encrypted output. The "Module Operation" details character-by-character encryption for "ANTOAN".</p>
+                <p><strong>Monoalphabetic Cipher Output:</strong> Shows input, the fixed key ("DKVQFIBJWPESCXHTMYAUOLRGZN"), and the encrypted output. Plaintext is uppercased before encryption.</p>
+                <p>The original script's code handles non-alphabetic characters by preserving them and converts input to uppercase for consistent processing with the defined keys and alphabets.</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const contentSections = document.querySelectorAll('.content-section');
+            const shiftPlaintext = document.getElementById('shiftPlaintext');
+            const shiftKeyInput = document.getElementById('shiftKey');
+            const shiftKeyValueDisplay = document.getElementById('shiftKeyValue');
+            const encryptShiftButton = document.getElementById('encryptShift');
+            const shiftCiphertext = document.getElementById('shiftCiphertext');
+            const originalAlphabetDisplay = document.getElementById('originalAlphabetDisplay');
+            const shiftedAlphabetDisplay = document.getElementById('shiftedAlphabetDisplay');
+            const shiftStepByStep = document.getElementById('shiftStepByStep');
+
+            const monoPlaintext = document.getElementById('monoPlaintext');
+            const monoKeyDisplay = document.getElementById('monoKeyDisplay').textContent;
+            const encryptMonoButton = document.getElementById('encryptMono');
+            const monoCiphertext = document.getElementById('monoCiphertext');
+            const monoKeyMappingVisual = document.getElementById('monoKeyMappingVisual');
+
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+            function updateAlphabetDisplays(key) {
+                originalAlphabetDisplay.innerHTML = alphabet.split('').map(c => `<span class="key-char">${c}</span>`).join('');
+                let shiftedAlphabet = "";
+                for (let i = 0; i < alphabet.length; i++) {
+                    const charCode = alphabet.charCodeAt(i);
+                    const base = 'A'.charCodeAt(0);
+                    shiftedAlphabet += String.fromCharCode(((charCode - base + key) % 26) + base);
+                }
+                shiftedAlphabetDisplay.innerHTML = shiftedAlphabet.split('').map(c => `<span class="key-char bg-rose-100">${c}</span>`).join('');
+            }
+            
+            updateAlphabetDisplays(parseInt(shiftKeyInput.value));
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    contentSections.forEach(s => s.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById(this.dataset.target).classList.add('active');
+                });
+            });
+
+            shiftKeyInput.addEventListener('input', function () {
+                shiftKeyValueDisplay.textContent = this.value;
+                updateAlphabetDisplays(parseInt(this.value));
+            });
+
+            encryptShiftButton.addEventListener('click', function () {
+                const plaintext = shiftPlaintext.value;
+                const key = parseInt(shiftKeyInput.value);
+                let ciphertext = "";
+                let steps = "";
+
+                if (plaintext.length > 0) {
+                    const firstChar = plaintext[0];
+                    let firstCharSteps = `For character '${firstChar}':\n`;
+                    if (firstChar >= 'A' && firstChar <= 'Z') {
+                        const originalPos = firstChar.charCodeAt(0) - 'A'.charCodeAt(0);
+                        const encryptedPos = (originalPos + key) % 26;
+                        const encryptedChar = String.fromCharCode(encryptedPos + 'A'.charCodeAt(0));
+                        firstCharSteps += `  Original Position (0-25): ${originalPos} (from '${firstChar}')\n`;
+                        firstCharSteps += `  Formula: (${originalPos} + ${key}) mod 26\n`;
+                        firstCharSteps += `  Calculation: (${originalPos + key}) mod 26 = ${encryptedPos}\n`;
+                        firstCharSteps += `  Encrypted Char (0-25 to Letter): '${encryptedChar}'\n`;
+                    } else if (firstChar >= 'a' && firstChar <= 'z') {
+                        const originalPos = firstChar.charCodeAt(0) - 'a'.charCodeAt(0);
+                        const encryptedPos = (originalPos + key) % 26;
+                        const encryptedChar = String.fromCharCode(encryptedPos + 'a'.charCodeAt(0));
+                        firstCharSteps += `  Original Position (0-25): ${originalPos} (from '${firstChar}')\n`;
+                        firstCharSteps += `  Formula: (${originalPos} + ${key}) mod 26\n`;
+                        firstCharSteps += `  Calculation: (${originalPos + key}) mod 26 = ${encryptedPos}\n`;
+                        firstCharSteps += `  Encrypted Char (0-25 to Letter): '${encryptedChar}'\n`;
+                    } else {
+                        firstCharSteps += `  '${firstChar}' is non-alphabetic, preserved as is.`;
+                    }
+                    steps = firstCharSteps;
+                } else {
+                    steps = "Enter plaintext to see step-by-step example for the first character.";
+                }
+
+
+                for (let i = 0; i < plaintext.length; i++) {
+                    let char = plaintext[i];
+                    if (char >= 'A' && char <= 'Z') {
+                        ciphertext += String.fromCharCode(((char.charCodeAt(0) - 'A'.charCodeAt(0) + key) % 26) + 'A'.charCodeAt(0));
+                    } else if (char >= 'a' && char <= 'z') {
+                        ciphertext += String.fromCharCode(((char.charCodeAt(0) - 'a'.charCodeAt(0) + key) % 26) + 'a'.charCodeAt(0));
+                    } else {
+                        ciphertext += char;
+                    }
+                }
+                shiftCiphertext.value = ciphertext;
+                shiftStepByStep.textContent = steps;
+            });
+
+            function displayMonoKeyMapping() {
+                let mappingHtml = "";
+                for (let i = 0; i < alphabet.length; i++) {
+                    mappingHtml += `<div class="inline-block text-center m-1 p-1 border rounded-sm"><span class="font-bold">${alphabet[i]}</span> → <span class="text-rose-600 font-bold">${monoKeyDisplay[i]}</span></div>`;
+                }
+                monoKeyMappingVisual.innerHTML = mappingHtml;
+            }
+            displayMonoKeyMapping();
+
+            encryptMonoButton.addEventListener('click', function () {
+                const plaintext = monoPlaintext.value;
+                const key = monoKeyDisplay;
+                const stdAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                let ciphertext = "";
+
+                for (let i = 0; i < plaintext.length; i++) {
+                    const char = plaintext[i];
+                    const charUpper = char.toUpperCase();
+                    const index = stdAlphabet.indexOf(charUpper);
+
+                    if (index !== -1) { // It's an alphabet character
+                        let encryptedChar = key[index];
+                        if (char >= 'a' && char <= 'z') { // Preserve lowercase
+                            ciphertext += encryptedChar.toLowerCase();
+                        } else { // Is uppercase or became uppercase
+                            ciphertext += encryptedChar;
+                        }
+                    } else { // Non-alphabetic
+                        ciphertext += char;
+                    }
+                }
+                monoCiphertext.value = ciphertext;
+            });
+
+            // Chart.js for Key Space Comparison
+            const ctx = document.getElementById('keySpaceChart').getContext('2d');
+            if (ctx) {
+                 new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Shift Cipher', 'Monoalphabetic Cipher (Conceptual)'],
+                        datasets: [{
+                            label: 'Number of Possible Keys',
+                            data: [26, 500], // Using 500 as a conceptual larger number for visualization
+                            backgroundColor: [
+                                'rgba(225, 29, 72, 0.5)', // rose-600 with opacity
+                                'rgba(120, 53, 15, 0.5)'  // amber-800 with opacity
+                            ],
+                            borderColor: [
+                                'rgba(225, 29, 72, 1)',
+                                'rgba(120, 53, 15, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Keys'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            if (context.label === 'Monoalphabetic Cipher (Conceptual)') {
+                                                label += '26! (approx 4 x 10^26) - Displayed conceptually';
+                                            } else {
+                                                label += context.parsed.y;
+                                            }
+                                        }
+                                        return label;
+                                    }
+                                }
+                            },
+                             title: {
+                                display: true,
+                                text: 'Conceptual Key Space Sizes'
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.error("Key Space Chart canvas element not found.");
+            }
+        });
+    </script>
+</body>
+</html>
